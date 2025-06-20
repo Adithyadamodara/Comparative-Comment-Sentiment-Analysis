@@ -46,10 +46,11 @@ def get_groq_analysis(comment1, comment2):
     try:
         prompt = f"""Compare and analyze the following:
         Original Tweet: {comment1}
-        Reply: {comment2},
+        Reply: {comment2}
         Determine whether the reply agrees, disagrees, or is neutral with respect to the original.
-        Provide a sentiment insight and comparative summary. Return only one of the labels: 'Agreement', 'Disagreement', or 'Neutral'.
-        Then explain in one or two sentences."""
+        Return the output in the following format:
+        Label: <Agreement/Disagreement/Neutral>\n
+        Explanation: <your reasoning in one or two sentences> """
         chat_completion = groq_client.chat.completions.create(
             messages = (
                 {"role": "system", "content": "You're an assistant that compares two texts for sentiment and provides insight."},
@@ -85,13 +86,11 @@ def main():
             st.subheader("Sentiment Classification")
             col3, col4 = st.columns(2)
             with col3:
-                st.markdown("### Original Tweet ###")
-                st.write(f"**Sentiment:**{label1}")
-                st.write(f"**Compound Score:**{score1['compound']:.2f}")
+                st.metric(label="Original Tweet Sentiment", value=label1)
+                st.metric(label="Compound Score", value=f"{score1['compound']:.2f}")
             with col4:
-                st.markdown("### Reply")
-                st.write(f"**Sentiment:**{label2}")
-                st.write(f"**Compound Score :**{score2['compound']:.2f}")
+                st.metric(label="Reply Sentiment", value=label2)
+                st.metric(label="Compound Score", value=f"{score2['compound']:.2f}")
             
             st.subheader("GROQ Insight")
             groq_summary=get_groq_analysis(text1,text2) 
@@ -112,13 +111,18 @@ def main():
             st.plotly_chart(fig, use_container_width=True)
             
             # Final Verdict
+            label_line = groq_summary.splitlines()[0]
+            label_value = label_line.replace("Label:", "").strip().lower()
             st.subheader("Final Verdict")
-            if "agreement" in groq_summary.lower():
+            if label_value == "agreement":
                 st.success("The reply is in agreement with the original tweet.")
-            elif "disagreement" in groq_summary.lower():
+            elif label_value == "disagreement":
                 st.error("The reply disagrees with the original tweet.")
+            elif label_value == "neutral":
+                st.info("The reply is neutral with respect to the original tweet.")
             else:
-                st.info("The reply is neutral with respect with the original tweet.")
+                st.warning("Unable to determine final verdict.")
+
 
 if __name__=="__main__":
     main()
