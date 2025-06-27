@@ -1,5 +1,5 @@
 import os
-from google.colab import userdata
+from dotenv import load_dotenv
 
 from langchain.chat_models import init_chat_model
 from langchain_community.document_loaders import PyPDFLoader
@@ -10,7 +10,7 @@ from langchain_groq import ChatGroq
 
 def setup():
   # Loading
-  loader =  PyPDFLoader('/content/sample_data/iphone-16-info.pdf')
+  loader =  PyPDFLoader('iphone-16-info.pdf')
   pages = loader.load()
 
   # Splitting
@@ -38,7 +38,8 @@ def setup():
   return query,docs
 
 def bot(query,docs):
-  api_key = userdata.get('GROQ_API_KEY')
+  load_dotenv()
+  api_key = os.getenv('GROQ_API_KEY')
   if not api_key:
     raise ValueError("GROQ_API_KEY not set")
   os.environ['GROQ_API_KEY'] = api_key
